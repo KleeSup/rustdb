@@ -1,4 +1,4 @@
-use std::{fmt::Display};
+use std::{fmt::Display, write};
 use crate::{database::Value};
 
 #[derive(Debug)]
@@ -13,6 +13,9 @@ pub enum Command{
     Delete {
         key: String,
     },
+    Type {
+        key: String,
+    },
 }
 
 impl Display for Command {
@@ -21,6 +24,7 @@ impl Display for Command {
             Self::Get { key } => write!(f, "Get(key='{}')", key),
             Self::Set { key, value } => write!(f, "Set(key='{}',value='{}')", key, value),
             Self::Delete { key } => write!(f, "Delete(key='{}')", key),
+            Self::Type { key } => write!(f, "Type(key='{}')", key),
         }
     }
 }
@@ -72,6 +76,10 @@ impl Parser{
         // Command: GET <key>
         if command.eq_ignore_ascii_case("get") {
             return Ok(Command::Get { key: key.to_string() });
+        }
+
+        if command.eq_ignore_ascii_case("type"){
+            return Ok(Command::Type { key: key.to_string() });
         }
 
         // Command DELETE <key>

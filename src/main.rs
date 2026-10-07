@@ -1,9 +1,20 @@
 use std::{io::{Write, stdin, stdout}, println};
 
-use crate::command::Command::{Delete, Get, Set};
+use crate::command::Command::{Delete, Get, Set, Type};
 
 mod database;
 mod command;
+
+macro_rules! print_help {
+    () => {
+        println!("==> SET <key> <value>: Sets a value for a key");
+        println!("==> GET <key>: Gets the value for a key if there was anything set");
+        println!("==> DELETE <key>: Deletes a key from the database, removing its value");
+        println!("==> TYPE <key>: Checks the type of a value for a key if set");
+        println!();
+    };
+}
+
 
 fn main() {
 
@@ -41,7 +52,7 @@ fn main() {
         let trimmed = input.trim();
 
         if trimmed.eq_ignore_ascii_case("help"){
-            print_help();
+            print_help!();
             continue;
         }
 
@@ -77,17 +88,15 @@ fn main() {
                     None => println!("=> Nothing to delete!") 
                 }
             },
+            Type{key} => {
+                match db.get(&key){
+                    Some(val) => println!("=> The type of the value for key '{}' is {:?}.", key, val),
+                    None => println!("=> There is no value for key '{}' set!", key),
+                };
+            },
         };
 
 
     }
 
-}
-
-fn print_help(){
-    println!("==> SET <key> <value>");
-    println!("==> GET <key>");
-    println!("==> DELETE <key>");
-    println!("==> TYPE <key>");
-    println!("");
 }
