@@ -1,5 +1,5 @@
-use std::fmt::Display;
-use crate::database::Value;
+use std::{fmt::Display};
+use crate::{database::Value};
 
 #[derive(Debug)]
 pub enum Command{
@@ -19,7 +19,7 @@ impl Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Get { key } => write!(f, "Get(key='{}')", key),
-            Self::Set { key, value } => write!(f, "Set(key='{}',value='{}'", key, value),
+            Self::Set { key, value } => write!(f, "Set(key='{}',value='{}')", key, value),
             Self::Delete { key } => write!(f, "Delete(key='{}')", key),
         }
     }
@@ -91,11 +91,31 @@ impl Parser{
                     None => return Err(ParseError::MissingValue),
                 };
 
-                return Ok(Command::Set { key: (), value: () });
-
+                // String.parse() returns a Result<F, F::Err>. 
+                // By writing String.parse::<i64>() we specify a generic type argument.
+                // is_ok() on a Result<T, E> returns true if the value is Ok(...) and false if it is Err(...).  
+                // if val.parse::<i64>().is_ok() {}
+                //
+                // However, since I want to keep the parsed result and not only check if it worked, this is better:
+                if let Ok(number) = val.parse::<i64>(){
+                    return Ok(Command::Set { key: key.to_string(), value: Value::Integer(number) });
+                }else if let Ok(float) = val.parse::<f64>(){
+                    return Ok(Command::Set { key: key.to_string(), value: Value::Float(float) });
+                }else { // default to string
+                    return Ok(Command::Set { key: key.to_string(), value: Value::String(val.to_string()) });
+                }
+            }else{ // list of values will be turned into a string list 
+                let mut list = Vec::<String>::new();
+                // iterate each remaining element and push it into the vector.
+                loop {
+                    let next = match parts.next(){
+                        Some(val) => val,
+                        None => break,
+                    };
+                    list.push(next.to_string());
+                }
+                return Ok(Command::Set { key: key.to_string(), value: Value::List(list) });
             }
-
-
         }
 
         return Err(ParseError::InvalidCommand);

@@ -1,11 +1,13 @@
-use std::io::{Read, Write, stdin, stdout};
+use std::{io::{Write, stdin, stdout}, println};
+
+use crate::command::Command::{Delete, Get, Set};
 
 mod database;
 mod command;
 
 fn main() {
 
-    let db = database::Database::default();
+    let mut db = database::Database::new();
     let mut parser = command::Parser::new();
 
     println!("]===================================[");
@@ -19,6 +21,7 @@ fn main() {
     let mut input = String::new();
 
     loop {
+        input.clear();
         // Print an arrow infront of the input line for asthetics.
         print!("> ");
         // Flush the output to present the arrow.
@@ -35,7 +38,9 @@ fn main() {
             input.pop();
         }
 
-        if input.eq_ignore_ascii_case("help"){
+        let trimmed = input.trim();
+
+        if trimmed.eq_ignore_ascii_case("help"){
             print_help();
             continue;
         }
@@ -49,7 +54,30 @@ fn main() {
             },
         };
 
-        println!("Presented command: {}", command);
+        //println!("=> Presented command: {}", command);
+
+        
+
+        match command {
+            Get { key } => {
+                let val = db.get(&key);
+                match val {
+                    Some(val) => println!("=> '{}' is '{}'", key, val),
+                    None => println!("=> There is no value for key '{}' set!", key),
+                };
+            },
+            Set { key, value } => {
+                println!("=> '{}' was set to '{}'!", key, value);
+                db.set(key, value);
+            },
+            Delete { key } => {
+                let result = db.delete(&key);
+                match result {
+                    Some(_) => println!("=> Value for key '{}' was deleted!", key),
+                    None => println!("=> Nothing to delete!") 
+                }
+            },
+        };
 
 
     }
@@ -57,5 +85,9 @@ fn main() {
 }
 
 fn print_help(){
-
+    println!("==> SET <key> <value>");
+    println!("==> GET <key>");
+    println!("==> DELETE <key>");
+    println!("==> TYPE <key>");
+    println!("");
 }
